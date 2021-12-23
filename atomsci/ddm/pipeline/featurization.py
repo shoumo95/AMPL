@@ -324,18 +324,28 @@ def compute_mordred_descriptors_from_smiles(smiles_strs, max_cpus=None, quiet=Tr
     return desc_df, is_valid
 
 
-def compute_all_rdkit_descrs(mol_df, mol_col = "mol"):
+def compute_all_rdkit_descrs(mol_df, desc, mol_col = "mol"):
     """
-    Compute all RDKit descriptors
+    Compute all or some RDKit descriptors
 
     Args:
-        mols: List of RDKit Mol objects to compute descriptors for.
+        mol_df: Dataframe of RDKit Mol objects to compute descriptors for.
+        
+        desc (string or list): 'all' computes all RDKit descriptors. Any other string is assumed to be a single descriptor like 'MolWt'. A list of RDKit descriptors is also accepted.
 
     Returns:
         res_df (DataFrame): Data frame containing computed descriptors.
 
     """
-    all_desc = [x[0] for x in Descriptors._descList]
+    if desc=='all':
+        all_desc = [x[0] for x in Descriptors._descList]
+    elif isinstance(desc, str):
+        all_desc=[desc]
+    elif isinstance(desc,list):
+        all_desc=desc
+    else: #should not happen
+        log.error("Invalid input for subset of RDKit descriptors. Input string or list of strings.")
+        return None
     calc = get_rdkit_calculator(all_desc)
     for i in mol_df.index:
         cd = calc.CalcDescriptors(mol_df.at[i, mol_col])
@@ -343,12 +353,14 @@ def compute_all_rdkit_descrs(mol_df, mol_col = "mol"):
             mol_df.at[i, desc] = d
     return mol_df
 
-def compute_rdkit_descriptors_from_smiles(smiles_strs, smiles_col='rdkit_smiles'):
+def compute_rdkit_descriptors_from_smiles(smiles_strs, desc='all', smiles_col='rdkit_smiles'):
     """
     Compute 2D and 3D RDKit descriptors for the given list of SMILES strings.
 
     Args:
         smiles_strs:    A list or array of SMILES strings
+        
+        desc (string or list): 'all' computes all RDKit descriptors. Any other string is assumed to be a single descriptor like 'MolWt'. A list of RDKit descriptors is also accepted.
 
         max_cpus:       The maximum number of cores to use for computing descriptors. The default value None means
                         that all available cores will be used.
@@ -366,7 +378,42 @@ def compute_rdkit_descriptors_from_smiles(smiles_strs, smiles_col='rdkit_smiles'
     """
     mols3d, is_valid = get_3d_mols(smiles_strs)
     mol_df = pd.DataFrame({"mol": mols3d})
-    desc_df = compute_all_rdkit_descrs(mol_df)
+    desc_df = compute_all_rdkit_descrs(mol_df, desc)
+    valid_smiles = np.array(smiles_strs)[is_valid]
+    if desc_df is not None:
+        desc_df[smiles_col] = valid_smiles
+    else:
+        log.debug('Descriptor calculation failed for one of the following SMILES strings:')
+        for smi in valid_smiles:
+            log.debug(smi)
+    return desc_df, is_valid
+
+def compute_rdkit_molwt_from_smiles(smiles_strs, desc='MolWt', smiles_col='rdkit_smiles'):
+    """
+    Compute RDKit MolWt for the given list of SMILES strings - compute 2D mols only for speed.
+
+    Args:
+        smiles_strs:    A list or array of SMILES strings
+        
+        desc (string or list): 'all' computes all RDKit descriptors. Any other string is assumed to be a single descriptor like 'MolWt'. A list of RDKit descriptors is also accepted.
+
+        max_cpus:       The maximum number of cores to use for computing descriptors. The default value None means
+                        that all available cores will be used.
+        quiet (bool):   If True, suppress displaying a progress indicator while computing descriptors.
+
+        smiles_col (str): The name of the column that will contain SMILES strings in the returned data frame.
+
+    Returns: tuple
+        desc_df (DataFrame): A table of Mordred descriptors for the input SMILES strings that were valid
+                        (according to RDKit), together with those SMILES strings.
+
+        is_valid (ndarray of bool): An array of length the same as smiles_strs, indicating which SMILES strings
+                            were considered valid.
+
+    """
+    mols2d, is_valid = get_2d_mols(smiles_strs)
+    mol_df = pd.DataFrame({"mol": mols2d})
+    desc_df = compute_all_rdkit_descrs(mol_df, desc)
     valid_smiles = np.array(smiles_strs)[is_valid]
     if desc_df is not None:
         desc_df[smiles_col] = valid_smiles

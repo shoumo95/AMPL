@@ -321,6 +321,25 @@ class ModelDataset(object):
         if len(missing_tasks) > 0:
             raise Exception("Requested prediction task columns %s are missing from dataset %s" % (
                 ", ".join(missing_tasks), self.dataset_name))
+    
+    # ****************************************************************************************
+    def check_smiles(self, dset_df):
+        """Check that the data frame dset_df contains smiles with valid molecular weights (smaller than 2500).
+
+        Args:
+            dset_df (pd.DataFrame): Dataset as a DataFrame that contains columns for the prediction tasks
+            
+        Raises:
+            Warning:
+                If molecular weights are >2500 for any molecule in input dataset.
+
+        """
+        smileslist=dset_df[self.params.smiles_col].tolist()
+        molwts, _=feat.compute_rdkit_molwt_from_smiles(smileslist)
+        num_high=len(molwts[molwts['MolWt']>2500])
+        if num_high>0:
+            print(f"CURATION WARNING: There are {num_high} molecules in your dataset with Mol Wt >2500. These may cause model training or predictions to fail. Consider removing them during data curation before training or predicting on this dataset.")
+        
 
     # ****************************************************************************************
     def load_featurized_data(self):
@@ -358,7 +377,7 @@ class ModelDataset(object):
                                                            featurized_dset_df, self)
                 self.n_features = self.featurization.get_feature_count()
                 self.log.debug("Creating deepchem dataset")
-                
+                self.check_smiles(featurized_dset_df)
                 # don't do make_weights which convert all NaN rows into 0 for hybrid model
                 if self.params.model_type != "hybrid":
                     self.vals, w = feat.make_weights(self.vals)
@@ -379,6 +398,7 @@ class ModelDataset(object):
             self.log.info("Creating new featurized dataset for dataset %s" % self.dataset_name)
         dset_df = self.load_full_dataset()
         self.check_task_columns(dset_df)
+        self.check_smiles(dset_df)
         features, ids, self.vals, self.attr, w = self.featurization.featurize_data(dset_df, self)
         self.n_features = self.featurization.get_feature_count()
         print("number of features: " + str(self.n_features))
@@ -782,7 +802,7 @@ class MinimalDataset(ModelDataset):
                 
                 attr: A pd.dataframe containing the compound ids and smiles
         """
-
+        self.check_smiles(dset_df)
         params = self.params
         if is_featurized:
             # Input data frame already contains feature columns

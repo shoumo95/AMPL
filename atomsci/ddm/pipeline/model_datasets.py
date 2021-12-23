@@ -25,6 +25,7 @@ except (ImportError, AttributeError, ModuleNotFoundError):
 
 logging.basicConfig(format='%(asctime)-15s %(message)s')
 
+molwt_cutoff=2000
 
 # ****************************************************************************************
 def create_model_dataset(params, featurization, ds_client=None):
@@ -336,9 +337,9 @@ class ModelDataset(object):
         """
         smileslist=dset_df[self.params.smiles_col].tolist()
         molwts, _=feat.compute_rdkit_molwt_from_smiles(smileslist)
-        num_high=len(molwts[molwts['MolWt']>2500])
+        num_high=len(molwts[molwts['MolWt']>molwt_cutoff])
         if num_high>0:
-            print(f"CURATION WARNING: There are {num_high} molecules in your dataset with Mol Wt >2500. These may cause model training or predictions to fail. Consider removing them during data curation before training or predicting on this dataset.")
+            print(f"CURATION WARNING: There are {num_high} molecules in your dataset with Mol Wt >{molwt_cutoff}. These may cause model training or predictions to fail. Consider removing them during data curation before training or predicting on this dataset.")
         
 
     # ****************************************************************************************

@@ -338,9 +338,12 @@ class ModelDataset(object):
         smileslist=dset_df[self.params.smiles_col].tolist()
         molwts, _=feat.compute_rdkit_molwt_from_smiles(smileslist)
         num_high=len(molwts[molwts['MolWt']>molwt_cutoff])
+        import pdb
         if num_high>0:
-            print(f"CURATION WARNING: There are {num_high} molecules in your dataset with Mol Wt >{molwt_cutoff}. These may cause model training or predictions to fail. Consider removing them during data curation before training or predicting on this dataset.")
-        
+            #pdb.set_trace()
+            #print(f"CURATION WARNING: There are {num_high} molecules in your dataset with Mol Wt >{molwt_cutoff}. These may cause model training or predictions to fail. Consider removing them during data curation before training or predicting on this dataset.")
+            self.log.warning(f"CURATION WARNING: There are {num_high} molecules in your dataset with Mol Wt >{molwt_cutoff}. These may cause model training or predictions to fail. Consider removing them during data curation before training or predicting on this dataset.")
+            #logging.getLogger('ATOM').critical(f"CURATION WARNING: There are {num_high} molecules in your dataset with Mol Wt >{molwt_cutoff}. These may cause model training or predictions to fail. Consider removing them during data curation before training or predicting on this dataset.")
 
     # ****************************************************************************************
     def load_featurized_data(self):

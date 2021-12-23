@@ -61,7 +61,7 @@ def predict_from_tracker_model(model_uuid, collection, input_df, id_col='compoun
 # =====================================================================================================
 def predict_from_model_file(model_path, input_df, id_col='compound_id', smiles_col='rdkit_smiles',
                      response_col=None, conc_col=None, is_featurized=False, dont_standardize=False, AD_method=None, k=5, dist_metric="euclidean",
-                     external_training_data=None):
+                     external_training_data=None, **kwargs):
     """
     Loads a pretrained model from a model tarball file and runs predictions on compounds in an input
     data frame.
@@ -106,6 +106,8 @@ def predict_from_model_file(model_path, input_df, id_col='compound_id', smiles_c
     input_df, pred_params = _prepare_input_data(input_df, id_col, smiles_col, response_col, conc_col, dont_standardize)
 
     has_responses = ('response_cols' in pred_params)
+    for k, v in kwargs.items():
+        pred_params[k] = v
     pred_params = parse.wrapper(pred_params)
 
     pipe = mp.create_prediction_pipeline_from_file(pred_params, reload_dir=None, model_path=model_path)

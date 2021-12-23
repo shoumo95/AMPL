@@ -324,7 +324,7 @@ def compute_mordred_descriptors_from_smiles(smiles_strs, max_cpus=None, quiet=Tr
     return desc_df, is_valid
 
 
-def compute_all_rdkit_descrs(mol_df, desc, mol_col = "mol"):
+def compute_all_rdkit_descrs(mol_df, desc='all', mol_col = "mol"):
     """
     Compute all or some RDKit descriptors
 

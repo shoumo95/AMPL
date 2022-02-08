@@ -59,7 +59,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#module-pipeline.dist_metrics">pipeline.dist_metrics module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-pipeline.diversity_plots">pipeline.diversity_plots module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-pipeline.featurization">pipeline.featurization module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#pipeline-featurize-importance-module">pipeline.featurize_importance module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pipeline-feature-importance-module">pipeline.feature_importance module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-pipeline.model_datasets">pipeline.model_datasets module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-pipeline.model_pipeline">pipeline.model_pipeline module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-pipeline.model_tracker">pipeline.model_tracker module</a></li>
@@ -1725,8 +1725,135 @@ w: numpy array same shape as vals, where w[i,j] = 1 if vals[i,j] is nan else w[i
 </dd></dl>
 
 </section>
-<section id="pipeline-featurize-importance-module">
-<h2>pipeline.featurize_importance module<a class="headerlink" href="#pipeline-featurize-importance-module" title="Permalink to this headline"></a></h2>
+<section id="pipeline-feature-importance-module">
+<h2>pipeline.feature_importance module<a class="headerlink" href="#pipeline-feature-importance-module" title="Permalink to this headline"></a></h2>
+<span class="target" id="module-pipeline.feature_importance"></span><p>Functions to assess feature importance in AMPL models</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pipeline.feature_importance.base_feature_importance">
+<span class="sig-prename descclassname"><span class="pre">pipeline.feature_importance.</span></span><span class="sig-name descname"><span class="pre">base_feature_importance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_pipeline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pipeline/feature_importance.html#base_feature_importance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pipeline.feature_importance.base_feature_importance" title="Permalink to this definition"></a></dt>
+<dd><p>Minimal baseline feature importance function. Given an AMPL model (or the parameters to train a model),
+returns a data frame with a row for each feature. The columns of the data frame depend on the model type and
+prediction type. If the model is a binary classifier, the columns include  t-statistics and p-values
+for the differences between the means of the active and inactive compounds. If the model is a random forest,
+the columns will include the mean decrease in impurity (MDI) of each feature, computed by the scikit-learn
+<a href="#id9"><span class="problematic" id="id10">feature_importances_</span></a> function. See the scikit-learn documentation for warnings about interpreting the MDI
+importance. For all models, the returned data frame will include feature names, means and standard deviations
+for each feature.</p>
+<p>This function has been tested on RFs and NNs with rdkit descriptors. Other models and feature combinations
+may not be supported.</p>
+<dl>
+<dt>Args:</dt><dd><p>model_pipeline (<cite>ModelPipeline</cite>): A pipeline object for a model that was trained in the current Python session
+or loaded from the model tracker or a tarball file. Either model_pipeline or params must be provided.</p>
+<p>params (<cite>dict</cite>): Parameter dictionary for a model to be trained and analyzed. Either model_pipeline or a
+params argument must be passed; if both are passed, params is ignored and the parameters from model_pipeline
+are used.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>(imp_df, model_pipeline, pparams) (tuple):</dt><dd><p>imp_df (<cite>DataFrame</cite>): Table of feature importance metrics.
+model_pipeline (<cite>ModelPipeline</cite>): Pipeline object for model that was passed to or trained by function.
+pparams (<cite>Namespace</cite>): Parsed parameters of model.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pipeline.feature_importance.cluster_permutation_importance">
+<span class="sig-prename descclassname"><span class="pre">pipeline.feature_importance.</span></span><span class="sig-name descname"><span class="pre">cluster_permutation_importance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_pipeline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clust_height</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nreps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nworkers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pipeline/feature_importance.html#cluster_permutation_importance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pipeline.feature_importance.cluster_permutation_importance" title="Permalink to this definition"></a></dt>
+<dd><p>Divide the input features used in a model into correlated clusters, then assess the importance of the features
+by iterating over clusters, permuting the values of all the features in the cluster, and measuring the effect
+on the model performance metric given by score_type for the training, validation and test subsets.</p>
+<dl>
+<dt>Args:</dt><dd><p>model_pipeline (<cite>ModelPipeline</cite>): A pipeline object for a model that was trained in the current Python session
+or loaded from the model tracker or a tarball file. Either <cite>model_pipeline</cite> or <cite>params</cite> must be provided.</p>
+<p>params (<cite>dict</cite>): Parameter dictionary for a model to be trained and analyzed. Either <cite>model_pipeline</cite> or a
+<cite>params</cite> argument must be passed; if both are passed, <cite>params</cite> is ignored and the parameters from <cite>model_pipeline</cite>
+are used.</p>
+<p>clust_height (float): Height at which to cut the dendrogram branches to split features into clusters.</p>
+<p>result_file (str): Path to a CSV file where a table of features and cluster indices will be written.</p>
+<p>nreps (int): Number of repetitions of the permutation and rescoring procedure to perform for each feature; the 
+importance values returned will be averages over repetitions. More repetitions will yield better importance
+estimates at the cost of greater computing time.</p>
+<p>nworkers (int): Number of parallel worker threads to use for permutation and rescoring. Currently ignored; multithreading
+will be added in a future version.</p>
+</dd>
+<dt>Returns:</dt><dd><p>imp_df (DataFrame): Table of feature clusters and importance values</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pipeline.feature_importance.display_feature_clusters">
+<span class="sig-prename descclassname"><span class="pre">pipeline.feature_importance.</span></span><span class="sig-name descname"><span class="pre">display_feature_clusters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_pipeline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clust_height</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_dendro</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pipeline/feature_importance.html#display_feature_clusters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pipeline.feature_importance.display_feature_clusters" title="Permalink to this definition"></a></dt>
+<dd><p>Cluster the input features used in the model specified by <cite>model_pipeline</cite> or <cite>params</cite>, using Spearman correlation
+as a similarity metric. Display a dendrogram and/or a correlation matrix heatmap, so the user can decide the
+height at which to cut the dendrogram in order to split the features into clusters, for input to
+<cite>cluster_permutation_importance</cite>.</p>
+<dl>
+<dt>Args:</dt><dd><p>model_pipeline (<cite>ModelPipeline</cite>): A pipeline object for a model that was trained in the current Python session
+or loaded from the model tracker or a tarball file. Either <cite>model_pipeline</cite> or <cite>params</cite> must be provided.</p>
+<p>params (<cite>dict</cite>): Parameter dictionary for a model to be trained and analyzed. Either <cite>model_pipeline</cite> or a
+<cite>params</cite> argument must be passed; if both are passed, <cite>params</cite> is ignored and the parameters from <cite>model_pipeline</cite>
+are used.</p>
+<p>clust_height (float): Height at which to draw a cut line in the dendrogram, to show how many clusters
+will be generated.</p>
+<p>corr_file (str): Path to an optional CSV file to be created containing the feature correlation matrix.</p>
+<p>show_matrix (bool): If True, plot a correlation matrix heatmap.</p>
+<p>show_dendro (bool): If True, plot the dendrogram.</p>
+</dd>
+<dt>Returns:</dt><dd><p>corr_linkage (np.ndarray): Linkage matrix from correlation clustering</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pipeline.feature_importance.permutation_feature_importance">
+<span class="sig-prename descclassname"><span class="pre">pipeline.feature_importance.</span></span><span class="sig-name descname"><span class="pre">permutation_feature_importance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_pipeline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nreps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nworkers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pipeline/feature_importance.html#permutation_feature_importance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pipeline.feature_importance.permutation_feature_importance" title="Permalink to this definition"></a></dt>
+<dd><p>Assess the importance of each feature used by a trained model by permuting the values of each feature in succession
+in the training, validation and test sets, making predictions, computing performance metrics, and measuring the effect
+of scrambling each feature on a particular metric.</p>
+<dl>
+<dt>Args:</dt><dd><p>model_pipeline (<cite>ModelPipeline</cite>): A pipeline object for a model that was trained in the current Python session
+or loaded from the model tracker or a tarball file. Either <cite>model_pipeline</cite> or <cite>params</cite> must be provided.</p>
+<p>params (<cite>dict</cite>): Parameter dictionary for a model to be trained and analyzed. Either <cite>model_pipeline</cite> or a
+<cite>params</cite> argument must be passed; if both are passed, <cite>params</cite> is ignored and the parameters from <cite>model_pipeline</cite>
+are used.</p>
+<p>score_type (str): Name of the scoring metric to use to assess importance. This can be any of the standard values
+supported by sklearn.metrics.get_scorer; the AMPL-specific values ‘npv’, ‘mcc’, ‘kappa’, ‘mae’, ‘rmse’, ‘ppv’,
+‘cross_entropy’, ‘bal_accuracy’ and ‘avg_precision’ are also supported. Score types for which smaller
+values are better, such as ‘mae’, ‘rmse’ and ‘cross_entropy’ are mapped to their negative counterparts.</p>
+<p>nreps (int): Number of repetitions of the permutation and rescoring procedure to perform for each feature; the 
+importance values returned will be averages over repetitions. More repetitions will yield better importance
+estimates at the cost of greater computing time.</p>
+<p>nworkers (int): Number of parallel worker threads to use for permutation and rescoring.</p>
+<p>result_file (str): Optional path to a CSV file to which the importance table will be written.</p>
+</dd>
+<dt>Returns:</dt><dd><p>imp_df (DataFrame): Table of features and importance metrics. The table will include the columns returned by
+<cite>base_feature_importance</cite>, along with the permutation importance scores for each feature for the training, validation
+and test subsets.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pipeline.feature_importance.plot_feature_importances">
+<span class="sig-prename descclassname"><span class="pre">pipeline.feature_importance.</span></span><span class="sig-name descname"><span class="pre">plot_feature_importances</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">imp_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">importance_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'valid_perm_importance_mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_feat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ascending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pipeline/feature_importance.html#plot_feature_importances"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pipeline.feature_importance.plot_feature_importances" title="Permalink to this definition"></a></dt>
+<dd><p>Display a horizontal bar plot showing the relative importances of the most important features or feature clusters, according to
+the results of <cite>permutation_feature_importance</cite>, <cite>cluster_permutation_importance</cite> or a similar function.</p>
+<dl>
+<dt>Args:</dt><dd><p>imp_df (DataFrame): Table of results from <cite>permutation_feature_importance</cite>, <cite>cluster_permutation_importance</cite>,
+<cite>base_feature_importance</cite> or a similar function.</p>
+<p>importance_col (str): Name of the column in <cite>imp_df</cite> to plot values from.</p>
+<p>max_feat (int): The maximum number of features or feature clusters to plot values for.</p>
+<p>ascending (bool): Should the features be ordered by ascending values of <cite>importance_col</cite>? Defaults to False; can be set True
+for p-values or something else where small values mean greater importance.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-pipeline.model_datasets">
 <span id="pipeline-model-datasets-module"></span><h2>pipeline.model_datasets module<a class="headerlink" href="#module-pipeline.model_datasets" title="Permalink to this headline"></a></h2>

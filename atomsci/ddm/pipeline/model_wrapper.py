@@ -1123,6 +1123,7 @@ class DCNNModelWrapper(NNModelWrapper):
             # Set defaults for layer sizes and dropouts, if not specified by caller. Note that
             # these depend on the featurizer used.
 
+            self.log.error("###### Hacking Graph Conv Network #########3")
             if self.params.layer_sizes is None:
                 self.params.layer_sizes = [64, 64, 128]
             if self.params.dropouts is None:
